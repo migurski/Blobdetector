@@ -1,11 +1,30 @@
 """
-Test detect() with a small 4x4 square
+1100     11--
+1100  >  11--
+0011     --22
+0011     --22
+
+>>> input = '\xee\xee\x11\x11\xee\xee\x11\x11\x11\x11\xee\xee\x11\x11\xee\xee'
+>>> detect(PIL.Image.fromstring('L', (4, 4), input))
+[(0, 0, 1, 1), (2, 2, 3, 3)]
+
+1100     11--
+1000  >  1---
+1011     1-22
+0011     --22
+
 >>> input = '\xee\xee\x11\x11\xee\x11\x11\x11\xee\x11\xee\xee\x11\x11\xee\xee'
->>> output = detect(PIL.Image.fromstring('L', (4, 4), input))
->>> output
+>>> detect(PIL.Image.fromstring('L', (4, 4), input))
 [(0, 0, 1, 2), (2, 2, 3, 3)]
->>> input
-'\\xee\\xee\\x11\\x11\\xee\\x11\\x11\\x11\\xee\\x11\\xee\\xee\\x11\\x11\\xee\\xee'
+
+0100     -1--     -1--
+1101  >  21-3  >  11-2
+1001     2--3     1--2
+0011     --43     --22
+
+>>> input = '\x11\xee\x11\x11\xee\xee\x11\xee\xee\x11\x11\xee\x11\x11\xee\xee'
+>>> detect(PIL.Image.fromstring('L', (4, 4), input))
+[(0, 0, 1, 2), (2, 1, 3, 3)]
 """
 
 import blobs
