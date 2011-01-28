@@ -2,13 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 
-// adds the error so that it doesn't overflow an unsigned char
-#ifndef adderror
-    #define adderror( b, e ) ( ((b) < -(e)) ? 0x00 : ( ((0xFF - (b)) < (e)) ? 0xFF : (b + e) ) )
-#endif
-
 /* blobs.detect()
- *   Given image dimensions and a raw string of grayscale pixels, dithers the "image"
+ *   Given image dimensions and a raw string of grayscale pixels, detects blobs in the "image"
  */
 static PyObject *detect(PyObject *self, PyObject *args)
 {
@@ -71,7 +66,7 @@ static PyObject *detect(PyObject *self, PyObject *args)
 
 /* map between python function name and C function pointer */
 static PyMethodDef BlobsMethods[] = {
-    {"detect", detect, METH_VARARGS, "Detect blobs in an image"},
+    {"detect", detect, METH_VARARGS, "Detect blobs in an image. Arguments are a width, height, and image string."},
     {NULL, NULL, 0, NULL}
 };
 
