@@ -11,11 +11,10 @@
  */
 static PyObject *detect(PyObject *self, PyObject *args)
 {
-    int i, w, h, off, len;
-    uint8_t blob, blobs = 0;
-    uint32_t x, y, xmin, ymin, xmax, ymax;
-    unsigned char *pixels, threshold[256];
+    int w, h, off, len, blob, blobs = 0;
+    int x, y, xmin, ymin, xmax, ymax;
     uint32_t response[256 * 4];
+    unsigned char *pixels;
     
     if(!PyArg_ParseTuple(args, "iis#", &w, &h, &pixels, &len))
     {
@@ -29,19 +28,8 @@ static PyObject *detect(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    // set up a basic threshold table to save some if/else later on
-    for(i = 0; i < 128; i++) {
-        threshold[i] = 0x00;
-    }
-    
-    for(i = 128; i < 256; i++) {
-        threshold[i] = 0xFF;
-    }
-    
-    // clear out the response
-    for(i = 0; i < 256 * 4; i += 1) {
-        response[i] = 0;
-    }
+    // an array to hold the labels
+    int labels[w * h];
     
     for(y = 0; y < h; y++)
     {
@@ -50,19 +38,22 @@ static PyObject *detect(PyObject *self, PyObject *args)
             // offset in the string for a given (x, y) pixel
             off = (y * w) + x;
             
-            // threshold the input image to simple black/white
-            pixels[off] = threshold[ pixels[off] ];
-            
-            // white pixel means it's part of a blob
-            if(pixels[off] == 0xff)
+            if(pixels[off] < 0x80)
             {
-                if(x > 0 && pixels[off - 1] > 0) {
+                // dark pixel means it's part of a blob
+                labels[off] = 0;
+            }
+            else
+            {
+                // light pixel means it's part of a blob
+
+                if(x > 0 && labels[off - 1] > 0) {
                     // pixel to the left is a known blob
-                    blob = pixels[off - 1];
+                    blob = labels[off - 1];
                 
-                } else if(y > 0 && pixels[off - w] > 0) {
+                } else if(y > 0 && labels[off - w] > 0) {
                     // pixel one row up is a known blob
-                    blob = pixels[off - w];
+                    blob = labels[off - w];
                 
                 } else {
                     // a new blob!
@@ -76,7 +67,7 @@ static PyObject *detect(PyObject *self, PyObject *args)
                     response[bloffset(blob, 3)] = y;
                 }
                 
-                pixels[off] = blob;
+                labels[off] = blob;
 
                 // read the known bounds for the current blob
                 xmin = response[bloffset(blob, 0)];
