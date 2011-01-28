@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #ifndef bloffset
-    #define bloffset( b ) ( (b - 1) * 16 )
+    #define bloffset(b, o) ( (b - 1) * 4 + o )
 #endif
 
 /* blobs.detect()
@@ -15,7 +15,7 @@ static PyObject *detect(PyObject *self, PyObject *args)
     uint8_t blob, blobs = 0;
     uint32_t x, y, xmin, ymin, xmax, ymax;
     unsigned char *pixels, threshold[256];
-    unsigned char response[256 * 16];
+    uint32_t response[256 * 4];
     
     if(!PyArg_ParseTuple(args, "iis#", &w, &h, &pixels, &len))
     {
@@ -39,8 +39,8 @@ static PyObject *detect(PyObject *self, PyObject *args)
     }
     
     // clear out the response
-    for(i = 0; i < 256 * 16; i += 1) {
-        response[i] = 0x00;
+    for(i = 0; i < 256 * 4; i += 1) {
+        response[i] = 0;
     }
     
     for(y = 0; y < h; y++)
@@ -70,40 +70,40 @@ static PyObject *detect(PyObject *self, PyObject *args)
                     blob = blobs;
                     
                     // save the current pixel as the bounds for this blob
-                    memcpy(response + bloffset(blob) +  0, &x, 4);
-                    memcpy(response + bloffset(blob) +  4, &y, 4);
-                    memcpy(response + bloffset(blob) +  8, &x, 4);
-                    memcpy(response + bloffset(blob) + 12, &y, 4);
+                    response[bloffset(blob, 0)] = x;
+                    response[bloffset(blob, 1)] = y;
+                    response[bloffset(blob, 2)] = x;
+                    response[bloffset(blob, 3)] = y;
                 }
                 
                 pixels[off] = blob;
 
                 // read the known bounds for the current blob
-                memcpy(&xmin, response + bloffset(blob) +  0, 4);
-                memcpy(&ymin, response + bloffset(blob) +  4, 4);
-                memcpy(&xmax, response + bloffset(blob) +  8, 4);
-                memcpy(&ymax, response + bloffset(blob) + 12, 4);
+                xmin = response[bloffset(blob, 0)];
+                ymin = response[bloffset(blob, 1)];
+                xmax = response[bloffset(blob, 2)];
+                ymax = response[bloffset(blob, 3)];
                 
                 if(x < xmin) {
-                    memcpy(response + bloffset(blob) +  0, &x, 4);
+                    response[bloffset(blob, 0)] = x;
                 }
                 
                 if(y < ymin) {
-                    memcpy(response + bloffset(blob) +  4, &y, 4);
+                    response[bloffset(blob, 1)] = y;
                 }
                 
                 if(x > xmax) {
-                    memcpy(response + bloffset(blob) +  8, &x, 4);
+                    response[bloffset(blob, 2)] = x;
                 }
                 
                 if(y > ymax) {
-                    memcpy(response + bloffset(blob) + 12, &y, 4);
+                    response[bloffset(blob, 3)] = y;
                 }
             }
         }
     }
     
-    return Py_BuildValue("is#", blobs, response, blobs * 16);
+    return Py_BuildValue("is#", blobs, response, blobs * sizeof(uint32_t) * 4);
 }
 
 /* map between python function name and C function pointer */
