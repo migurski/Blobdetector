@@ -15,7 +15,7 @@ def dither(i):
     """ Take an instance of single-channel PIL.Image, dither and return
     """
     assert i.mode == 'L'
-    s = atk.atk(i.size[0], i.size[1], i.tostring())
+    s = atk.detect(i.size[0], i.size[1], i.tostring())
     o = PIL.Image.fromstring('L', i.size, s)
     return o
 

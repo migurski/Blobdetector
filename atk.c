@@ -7,10 +7,10 @@
     #define adderror( b, e ) ( ((b) < -(e)) ? 0x00 : ( ((0xFF - (b)) < (e)) ? 0xFF : (b + e) ) )
 #endif
 
-/* atk.atk()
+/* atk.detect()
  *   Given image dimensions and a raw string of grayscale pixels, dithers the "image"
  */
-static PyObject *atk(PyObject *self, PyObject *args)
+static PyObject *detect(PyObject *self, PyObject *args)
 {
     int i, x, y, w, h, off, len, blob = 1;
     unsigned char *pixels, threshold[256];
@@ -71,7 +71,7 @@ static PyObject *atk(PyObject *self, PyObject *args)
 
 /* map between python function name and C function pointer */
 static PyMethodDef AtkMethods[] = {
-    {"atk", atk, METH_VARARGS, "Dither an image"},
+    {"detect", detect, METH_VARARGS, "Detect blobs in an image"},
     {NULL, NULL, 0, NULL}
 };
 
