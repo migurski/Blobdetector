@@ -12,9 +12,8 @@
  */
 static PyObject *atk(PyObject *self, PyObject *args)
 {
-    int i, x, y, w, h, off, len, err;
+    int i, x, y, w, h, off, len, blob = 1;
     unsigned char *pixels, threshold[256];
-    unsigned char old, new;
     
     if(!PyArg_ParseTuple(args, "iis#", &w, &h, &pixels, &len))
     {
@@ -44,44 +43,25 @@ static PyObject *atk(PyObject *self, PyObject *args)
             // offset in the string for a given (x, y) pixel
             off = (y * w) + x;
             
-            // threshold and get the error
-            old = pixels[off];
-            new = threshold[ pixels[off] ];
-            err = (old - new) >> 3; // divide by 8
-
-            // update the image
-            pixels[off] = new;
+            // threshold the input image to simple black/white
+            pixels[off] = threshold[ pixels[off] ];
             
-            // now distribute the error...
-            
-            // x+1, y
-            if(x+1 < w) {
-                pixels[off + 1] = adderror(pixels[off + 1], err);
-            }
-            
-            // x+2, y
-            if(x+2 < w) {
-                pixels[off + 2] = adderror(pixels[off + 2], err);
-            }
-            
-            // x-1, y+1
-            if(x > 0 && y+1 < h) {
-                pixels[off + w - 1] = adderror(pixels[off + w - 1], err);
-            }
-            
-            // x, y+1
-            if(y+1 < h) {
-                pixels[off + w] = adderror(pixels[off + w], err);
-            }
-            
-            // x+1, y+1
-            if(x+1 < w && y+1 < h) {
-                pixels[off + w + 1] = adderror(pixels[off + w + 1], err);
-            }
-            
-            // x, y+2
-            if(y+2 < h) {
-                pixels[off + 2 * w] = adderror(pixels[off + 2 * w], err);
+            // white pixel means it's part of a blob
+            if(pixels[off] == 0xff)
+            {
+                if(x > 0 && pixels[off - 1] > 0) {
+                    // pixel to the left is a known blob
+                    pixels[off] = pixels[off - 1];
+                
+                } else if(y > 0 && pixels[off - w] > 0) {
+                    // pixel one row up is a known blob
+                    pixels[off] = pixels[off - w];
+                
+                } else {
+                    // new blob!
+                    pixels[off] = blob;
+                    blob++;
+                }
             }
         }
     }
