@@ -1,9 +1,9 @@
 # totally swiped from http://www.python.org/doc/2.5.2/ext/building.html
 from distutils.core import setup, Extension
 
-atk = Extension('atk', sources = ['atk.c'])
+blobs = Extension('blobs', sources = ['blobs.c'])
 
-setup (name = 'atk',
+setup (name = 'blobs',
        version = '1.0',
        description = 'Stub function which takes a string and returns a string',
-       ext_modules = [atk])
+       ext_modules = [blobs])
