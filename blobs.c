@@ -11,9 +11,9 @@
  */
 static PyObject *detect(PyObject *self, PyObject *args)
 {
-    int w, h, off, len, blob, blobs = 0;
+    int w, h, off, len, label, blobs = 0;
     int x, y, xmin, ymin, xmax, ymax;
-    uint32_t response[256 * 4];
+    uint32_t bounds[256 * 4];
     unsigned char *pixels;
     
     if(!PyArg_ParseTuple(args, "iis#", &w, &h, &pixels, &len))
@@ -40,61 +40,60 @@ static PyObject *detect(PyObject *self, PyObject *args)
             
             if(pixels[off] < 0x80)
             {
-                // dark pixel means it's part of a blob
+                // dark pixel means it's part of the background
                 labels[off] = 0;
-            }
-            else
-            {
+
+            } else {
                 // light pixel means it's part of a blob
 
-                if(x > 0 && labels[off - 1] > 0) {
-                    // pixel to the left is a known blob
-                    blob = labels[off - 1];
-                
-                } else if(y > 0 && labels[off - w] > 0) {
+                if(y > 0 && labels[off - w] > 0) {
                     // pixel one row up is a known blob
-                    blob = labels[off - w];
+                    label = labels[off - w];
+                
+                } else if(x > 0 && labels[off - 1] > 0) {
+                    // pixel to the left is a known blob
+                    label = labels[off - 1];
                 
                 } else {
                     // a new blob!
                     blobs++;
-                    blob = blobs;
+                    label = blobs;
                     
                     // save the current pixel as the bounds for this blob
-                    response[bloffset(blob, 0)] = x;
-                    response[bloffset(blob, 1)] = y;
-                    response[bloffset(blob, 2)] = x;
-                    response[bloffset(blob, 3)] = y;
+                    bounds[bloffset(label, 0)] = x;
+                    bounds[bloffset(label, 1)] = y;
+                    bounds[bloffset(label, 2)] = x;
+                    bounds[bloffset(label, 3)] = y;
                 }
                 
-                labels[off] = blob;
+                labels[off] = label;
 
                 // read the known bounds for the current blob
-                xmin = response[bloffset(blob, 0)];
-                ymin = response[bloffset(blob, 1)];
-                xmax = response[bloffset(blob, 2)];
-                ymax = response[bloffset(blob, 3)];
+                xmin = bounds[bloffset(label, 0)];
+                ymin = bounds[bloffset(label, 1)];
+                xmax = bounds[bloffset(label, 2)];
+                ymax = bounds[bloffset(label, 3)];
                 
                 if(x < xmin) {
-                    response[bloffset(blob, 0)] = x;
+                    bounds[bloffset(label, 0)] = x;
                 }
                 
                 if(y < ymin) {
-                    response[bloffset(blob, 1)] = y;
+                    bounds[bloffset(label, 1)] = y;
                 }
                 
                 if(x > xmax) {
-                    response[bloffset(blob, 2)] = x;
+                    bounds[bloffset(label, 2)] = x;
                 }
                 
                 if(y > ymax) {
-                    response[bloffset(blob, 3)] = y;
+                    bounds[bloffset(label, 3)] = y;
                 }
             }
         }
     }
     
-    return Py_BuildValue("is#", blobs, response, blobs * sizeof(uint32_t) * 4);
+    return Py_BuildValue("is#", blobs, bounds, blobs * sizeof(uint32_t) * 4);
 }
 
 /* map between python function name and C function pointer */
