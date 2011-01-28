@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifndef adderror
+#ifndef bloffset
     #define bloffset( b ) ( (b - 1) * 16 )
 #endif
 
