@@ -1,7 +1,7 @@
 # totally swiped from http://www.python.org/doc/2.5.2/ext/building.html
 from distutils.core import setup, Extension
 
-blobs = Extension('blobs', sources = ['blobs.c'])
+blobs = Extension('blobs', sources = ['blobs.cpp'])
 
 setup (name = 'blobs',
        version = '1.0',
