@@ -25,6 +25,19 @@
 >>> input = '\x11\xee\x11\x11\xee\xee\x11\xee\xee\x11\x11\xee\x11\x11\xee\xee'
 >>> detect(PIL.Image.fromstring('L', (4, 4), input))
 [(0, 0, 1, 2), (2, 1, 3, 3)]
+
+00000000     --------     --------
+00011100     ---111--     ---111--
+00111110     --21111-     --11111-
+01111110  >  -321111-  >  -111111-
+01111110     -321111-     -111111-
+00111110     --21111-     --11111-
+00111100     --2111--     --1111--
+00000000     --------     --------
+
+>>> input = '\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\xee\xee\xee\x11\x11\x11\x11\xee\xee\xee\xee\xee\x11\x11\xee\xee\xee\xee\xee\xee\x11\x11\xee\xee\xee\xee\xee\xee\x11\x11\x11\xee\xee\xee\xee\xee\x11\x11\x11\xee\xee\xee\xee\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11'
+>>> detect(PIL.Image.fromstring('L', (8, 8), input))
+[(1, 1, 6, 6)]
 """
 
 import blobs

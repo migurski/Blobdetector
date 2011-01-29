@@ -56,9 +56,12 @@ static PyObject *detect(PyObject *self, PyObject *args)
                     // pixels up and left are both known blobs
                     label = labels[off - w];
                     
-                    // associate the two labels
-                    groups[label].insert(labels[off - 1]);
-                    groups[labels[off - 1]].insert(label);
+                    if(label != labels[off - 1])
+                    {
+                        // associate the two labels
+                        groups[label].insert(labels[off - 1]);
+                        groups[labels[off - 1]].insert(label);
+                    }
 
                 } else if(y > 0 && labels[off - w] > 0) {
                     // pixel one row up is a known blob
