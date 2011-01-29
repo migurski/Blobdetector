@@ -36,6 +36,8 @@ static PyObject *detect(PyObject *self, PyObject *args)
     
     // an array to hold the labels
     int labels[w * h];
+    set<int> groupset;
+    set<int>::iterator groupiter;
     
     for(y = 0; y < h; y++)
     {
@@ -61,6 +63,22 @@ static PyObject *detect(PyObject *self, PyObject *args)
                         // associate the two labels
                         groups[label].insert(labels[off - 1]);
                         groups[labels[off - 1]].insert(label);
+                        
+                        // unify the sets - make sure they all have the same items
+
+                        groupset = groups[label];
+                        
+                        for(groupiter = groupset.begin(); groupiter != groupset.end(); groupiter++)
+                        {
+                            groups[labels[off - 1]].insert(*groupiter);
+                        }
+                        
+                        groupset = groups[labels[off - 1]];
+                        
+                        for(groupiter = groupset.begin(); groupiter != groupset.end(); groupiter++)
+                        {
+                            groups[label].insert(*groupiter);
+                        }
                     }
 
                 } else if(y > 0 && labels[off - w] > 0) {
