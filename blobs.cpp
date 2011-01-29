@@ -1,20 +1,22 @@
 #include <Python.h>
 #include <string.h>
 #include <stdio.h>
-
-#ifndef bloffset
-    #define bloffset(b, o) ( (b - 1) * 4 + o )
-#endif
+#include <set>
+#include <map>
+#include <vector>
+using namespace std;
 
 /* blobs.detect()
- *   Given image dimensions and a raw string of grayscale pixels, detects blobs in the "image"
+ *
+ *  Given image dimensions and a raw string of grayscale pixels, detects blobs
+ *  in the "image" Uses two-pass connected component algorithm described here:
+ *  http://en.wikipedia.org/wiki/Blob_extraction#Two-pass (Jan 2011).
  */
 static PyObject *detect(PyObject *self, PyObject *args)
 {
-    int w, h, off, len, label, blobs = 0;
-    int x, y, xmin, ymin, xmax, ymax;
-    uint32_t bounds[256 * 4];
+    int x, y, w, h, off, len, label, blobs = 0;
     unsigned char *pixels;
+    map< int, set<int> > groups;
     
     if(!PyArg_ParseTuple(args, "iis#", &w, &h, &pixels, &len))
     {
@@ -27,6 +29,10 @@ static PyObject *detect(PyObject *self, PyObject *args)
         // fail if the given dimensions don't seem to match the passed image
         return NULL;
     }
+    
+   /*
+    * Pass one: provisionally label each non-background cell with a label.
+    */
     
     // an array to hold the labels
     int labels[w * h];
@@ -45,8 +51,16 @@ static PyObject *detect(PyObject *self, PyObject *args)
 
             } else {
                 // light pixel means it's part of a blob
+                
+                if(y > 0 && labels[off - w] > 0 && x > 0 && labels[off - 1] > 0) {
+                    // pixels up and left are both known blobs
+                    label = labels[off - w];
+                    
+                    // associate the two labels
+                    groups[label].insert(labels[off - 1]);
+                    groups[labels[off - 1]].insert(label);
 
-                if(y > 0 && labels[off - w] > 0) {
+                } else if(y > 0 && labels[off - w] > 0) {
                     // pixel one row up is a known blob
                     label = labels[off - w];
                 
@@ -59,41 +73,73 @@ static PyObject *detect(PyObject *self, PyObject *args)
                     blobs++;
                     label = blobs;
                     
-                    // save the current pixel as the bounds for this blob
-                    bounds[bloffset(label, 0)] = x;
-                    bounds[bloffset(label, 1)] = y;
-                    bounds[bloffset(label, 2)] = x;
-                    bounds[bloffset(label, 3)] = y;
+                    groups[label] = set<int>();
+                    groups[label].insert(label);
                 }
                 
                 labels[off] = label;
-
-                // read the known bounds for the current blob
-                xmin = bounds[bloffset(label, 0)];
-                ymin = bounds[bloffset(label, 1)];
-                xmax = bounds[bloffset(label, 2)];
-                ymax = bounds[bloffset(label, 3)];
-                
-                if(x < xmin) {
-                    bounds[bloffset(label, 0)] = x;
-                }
-                
-                if(y < ymin) {
-                    bounds[bloffset(label, 1)] = y;
-                }
-                
-                if(x > xmax) {
-                    bounds[bloffset(label, 2)] = x;
-                }
-                
-                if(y > ymax) {
-                    bounds[bloffset(label, 3)] = y;
-                }
             }
         }
     }
     
-    return Py_BuildValue("is#", blobs, bounds, blobs * sizeof(uint32_t) * 4);
+   /*
+    * Pass two: merge labels of connected components, collect bboxes along the way.
+    */
+    
+    map< int, vector<int> > bounds;
+    
+    for(y = 0; y < h; y++)
+    {
+        for(x = 0; x < w; x++)
+        {
+            // offset in the string for a given (x, y) pixel
+            off = (y * w) + x;
+            
+            if(labels[off] > 0)
+            {
+                label = *(groups[labels[off]].begin());
+                
+                if(bounds.find(label) == bounds.end())
+                {
+                    bounds[label] = vector<int>(4);
+                    
+                    bounds[label][0] = x;
+                    bounds[label][1] = y;
+                    bounds[label][2] = x;
+                    bounds[label][3] = y;
+
+                } else {
+                    bounds[label][0] = min(x, bounds[label][0]);
+                    bounds[label][1] = min(y, bounds[label][1]);
+                    bounds[label][2] = max(x, bounds[label][2]);
+                    bounds[label][3] = max(y, bounds[label][3]);
+                }
+            }
+        }
+    }
+
+   /*
+    * Build python response.
+    */
+    
+    map< int, vector<int> >::iterator bounditer;
+    uint32_t response[4 * bounds.size()];
+    vector<int> bbox;
+    off = 0;
+
+    for(bounditer = bounds.begin(); bounditer != bounds.end(); bounditer++)
+    {
+        bbox = (*bounditer).second;
+    
+        response[off + 0] = bbox[0];
+        response[off + 1] = bbox[1];
+        response[off + 2] = bbox[2];
+        response[off + 3] = bbox[3];
+        
+        off += 4;
+    }
+    
+    return Py_BuildValue("is#", bounds.size(), response, bounds.size() * sizeof(uint32_t) * 4);
 }
 
 /* map between python function name and C function pointer */
