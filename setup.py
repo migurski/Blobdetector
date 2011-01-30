@@ -11,4 +11,5 @@ setup(name = 'BlobDetector',
       url = 'https://github.com/migurski/Blobdetector',
       packages = ['BlobDetector'],
       ext_modules = [blobs],
+      download_url = 'https://github.com/downloads/migurski/Blobdetector/BlobDetector-0.9.0.tar.gz',
       license = 'BSD')
