@@ -40,7 +40,7 @@
 [(1, 1, 6, 6)]
 """
 
-import blobs
+import _blobs
 import struct
 import PIL.Image
 
@@ -48,7 +48,7 @@ def detect(i):
     """ Take an instance of single-channel PIL.Image, detect blobs and return
     """
     assert i.mode == 'L'
-    l, s = blobs.detect(i.size[0], i.size[1], i.tostring())
+    l, s = _blobs.detect(i.size[0], i.size[1], i.tostring())
     bounds = _expand(s)
     assert l == len(bounds)
     return bounds

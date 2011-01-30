@@ -165,11 +165,11 @@ static PyObject *detect(PyObject *self, PyObject *args)
 
 /* map between python function name and C function pointer */
 static PyMethodDef BlobsMethods[] = {
-    {"detect", detect, METH_VARARGS, "Detect blobs in an image. Arguments are a width, height, and image string."},
+    {"detect", detect, METH_VARARGS, "Detect blobs in an image. Arguments are width, height, and image string.\nReturns list of bbox tuples (left, top, right, bottom), one for each blob."},
     {NULL, NULL, 0, NULL}
 };
 
-/* bootstrap function, called automatically when you 'import blobs' */
-PyMODINIT_FUNC initblobs(void) {
-    (void)Py_InitModule("blobs", BlobsMethods);
+/* bootstrap function, called automatically when you 'import _blobs' */
+PyMODINIT_FUNC init_blobs(void) {
+    (void)Py_InitModule("_blobs", BlobsMethods);
 }
