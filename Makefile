@@ -1,4 +1,4 @@
-VERSION=0.9.0
+VERSION=0.9.1
 PACKAGE=BlobDetector-$(VERSION)
 TARBALL=$(PACKAGE).tar.gz
 

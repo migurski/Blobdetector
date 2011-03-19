@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 blobs = Extension('_blobs', sources=['blobs.cpp'])
 
 setup(name = 'BlobDetector',
-      version = '0.9.0',
+      version = '0.9.1',
       description = 'A small package that detects and categorizes blobs in images.',
       author = 'Michal Migurski',
       author_email = 'mike@stamen.com',
