@@ -122,18 +122,20 @@ static PyObject *detect(PyObject *self, PyObject *args)
                 
                 if(bounds.find(label) == bounds.end())
                 {
-                    bounds[label] = vector<int>(4);
+                    bounds[label] = vector<int>(5);
                     
                     bounds[label][0] = x;
                     bounds[label][1] = y;
                     bounds[label][2] = x;
                     bounds[label][3] = y;
+                    bounds[label][4] = 1;
 
                 } else {
                     bounds[label][0] = min(x, bounds[label][0]);
                     bounds[label][1] = min(y, bounds[label][1]);
                     bounds[label][2] = max(x, bounds[label][2]);
                     bounds[label][3] = max(y, bounds[label][3]);
+                    bounds[label][4] += 1;
                 }
             }
         }
@@ -144,7 +146,7 @@ static PyObject *detect(PyObject *self, PyObject *args)
     */
     
     map< int, vector<int> >::iterator bounditer;
-    uint32_t response[4 * bounds.size()];
+    uint32_t response[5 * bounds.size()];
     vector<int> bbox;
     off = 0;
 
@@ -156,11 +158,12 @@ static PyObject *detect(PyObject *self, PyObject *args)
         response[off + 1] = bbox[1];
         response[off + 2] = bbox[2];
         response[off + 3] = bbox[3];
+        response[off + 4] = bbox[4];
         
-        off += 4;
+        off += 5;
     }
     
-    return Py_BuildValue("is#", bounds.size(), response, bounds.size() * sizeof(uint32_t) * 4);
+    return Py_BuildValue("is#", bounds.size(), response, bounds.size() * sizeof(uint32_t) * 5);
 }
 
 /* map between python function name and C function pointer */
